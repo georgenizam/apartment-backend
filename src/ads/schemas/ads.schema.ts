@@ -11,6 +11,21 @@ export type AdDocument = Ad & Document;
 
 @Schema({
     versionKey: false,
+    timestamps: false,
+    _id: false,
+})
+class Images {
+    @Prop({ required: true })
+    id: string;
+
+    @Prop({ required: true })
+    image: string;
+}
+
+export const ImagesSchema = SchemaFactory.createForClass(Images);
+
+@Schema({
+    versionKey: false,
     timestamps: true,
     discriminatorKey: '__t',
 })
@@ -29,8 +44,8 @@ export class Ad {
     @Prop({ required: true })
     desc: string;
 
-    @Prop({ default: [] })
-    images: string[];
+    @Prop({ type: [ImagesSchema], default: [] })
+    images: Images[];
 
     @Prop({ required: true })
     floor: number;

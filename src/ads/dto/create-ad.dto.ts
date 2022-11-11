@@ -7,7 +7,7 @@ import {
     IsOptional,
     IsString,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export class CreateAdDto {
     @IsString()
@@ -27,10 +27,12 @@ export class CreateAdDto {
     desc: string;
 
     @IsNumber()
+    @Type(() => Number)
     @IsNotEmpty()
     floor: number;
 
     @IsNumber()
+    @Type(() => Number)
     @IsNotEmpty()
     floorsBuilding: number;
 
@@ -40,6 +42,7 @@ export class CreateAdDto {
     yearBuilding: Date;
 
     @IsNumber()
+    @Type(() => Number)
     @IsNotEmpty()
     square: number;
 
@@ -77,15 +80,18 @@ export class CreateAdDto {
     address: string;
 
     @IsNumber()
+    @Type(() => Number)
     @IsOptional()
     price: number;
 
     @IsNumber()
+    @Type(() => Number)
     @IsOptional()
     priceRent: number;
     // rentPeriod: null;
 
     @IsNumber()
+    @Type(() => Number)
     @IsOptional()
     deposit: number;
 }

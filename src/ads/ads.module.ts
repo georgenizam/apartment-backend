@@ -6,11 +6,13 @@ import { AdsController } from './ads.controller';
 import { AdOptionsModule } from '../ad-options/ad-options.module';
 import { AdRent, AdRentSchema } from './schemas/ads-rent.schema';
 import { AdBuy, AdBuySchema } from './schemas/ads-buy.schema';
+import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 
 @Module({
     providers: [AdsService],
     imports: [
         AdOptionsModule,
+        CloudinaryModule,
         MongooseModule.forFeature([
             {
                 name: Ad.name,

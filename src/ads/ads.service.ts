@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Ad, AdDocument } from './schemas/ads.schema';
 import { Model } from 'mongoose';
@@ -8,6 +8,7 @@ import { AdRent, AdRentDocument } from './schemas/ads-rent.schema';
 import { CreateAdBuyDto } from './dto/create-ad-buy.dto';
 import { CreateAdRentDto } from './dto/create-ad-rent.dto';
 import { AdBuy, AdBuyDocument } from './schemas/ads-buy.schema';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 @Injectable()
 export class AdsService {
@@ -15,6 +16,7 @@ export class AdsService {
         @InjectModel(Ad.name) private adModel: Model<AdDocument>,
         @InjectModel(AdRent.name) private adRentModel: Model<AdRentDocument>,
         @InjectModel(AdBuy.name) private adBuyModel: Model<AdBuyDocument>,
+        private cloudinary: CloudinaryService,
         private adOptionsService: AdOptionsService
     ) {}
 
@@ -42,11 +44,19 @@ export class AdsService {
     isCreateAdBuy(ad: CreateAdRentDto | CreateAdBuyDto): ad is CreateAdBuyDto {
         return (ad as CreateAdRentDto).price !== undefined;
     }
-    async createAdRent(createAdRentDto: CreateAdRentDto): Promise<AdRent> {
-        return this.adRentModel.create(createAdRentDto);
+    async createAdRent(
+        createAdRentDto: CreateAdRentDto,
+        files: Express.Multer.File[]
+    ): Promise<AdRent> {
+        const images = this.uploadImagesToCloudinary(files, 'ads');
+        return this.adRentModel.create({ ...createAdRentDto, images });
     }
-    async createAdBuy(createAdBuyDto: CreateAdBuyDto): Promise<AdBuy> {
-        return this.adBuyModel.create(createAdBuyDto);
+    async createAdBuy(
+        createAdBuyDto: CreateAdBuyDto,
+        files: Express.Multer.File[]
+    ): Promise<AdBuy> {
+        const images = await this.uploadImagesToCloudinary(files, 'ads');
+        return this.adBuyModel.create({ ...createAdBuyDto, images });
     }
     async validateCreateAd(createAdDto: CreateAdDto) {
         const [elevator, adType, apartmentsType, bedrooms, bathrooms, facilities] =
@@ -87,7 +97,10 @@ export class AdsService {
             facilities: facilities.map((item) => item._id.toString()),
         };
     }
-    async createAd(createAdDto: CreateAdDto, images: string[]): Promise<AdRent | AdBuy> {
+    async createAd(
+        createAdDto: CreateAdDto,
+        files: Express.Multer.File[]
+    ): Promise<AdRent | AdBuy> {
         const { elevator, adType, apartmentsType, bedrooms, bathrooms, facilities } =
             await this.validateCreateAd(createAdDto);
 
@@ -102,11 +115,28 @@ export class AdsService {
         };
 
         if (this.isCreateAdBuy(dto)) {
-            return await this.createAdBuy(dto);
+            return await this.createAdBuy(dto, files);
         }
 
         if (this.isCreateAdRent(dto)) {
-            return await this.createAdRent(dto);
+            return await this.createAdRent(dto, files);
         }
+    }
+
+    async uploadImagesToCloudinary(files: Express.Multer.File[], folder: string) {
+        const res = [];
+        try {
+            for (const imageItem of files) {
+                const { asset_id, url } = await this.cloudinary.uploadImage(imageItem, folder);
+                res.push({
+                    id: asset_id,
+                    image: url,
+                });
+            }
+        } catch (err) {
+            throw new BadRequestException('Invalid file type.');
+        }
+
+        return res;
     }
 }
