@@ -1,13 +1,5 @@
-import {
-    IsArray,
-    IsDate,
-    IsDateString,
-    IsNotEmpty,
-    IsNumber,
-    IsOptional,
-    IsString,
-} from 'class-validator';
 import { Transform, Type } from 'class-transformer';
+import { IsArray, IsDate, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateAdDto {
     @IsString()

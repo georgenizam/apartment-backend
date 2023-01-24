@@ -1,14 +1,16 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Ad, AdDocument } from './schemas/ads.schema';
 import { Model } from 'mongoose';
-import { CreateAdDto } from './dto/create-ad.dto';
 import { AdOptionsService } from '../ad-options/ad-options.service';
-import { AdRent, AdRentDocument } from './schemas/ads-rent.schema';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { PaginateResult } from '../types/pagination.types';
 import { CreateAdBuyDto } from './dto/create-ad-buy.dto';
 import { CreateAdRentDto } from './dto/create-ad-rent.dto';
+import { CreateAdDto } from './dto/create-ad.dto';
+import { GetAllQueryDto } from './dto/getall-query.dto';
 import { AdBuy, AdBuyDocument } from './schemas/ads-buy.schema';
-import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { AdRent, AdRentDocument } from './schemas/ads-rent.schema';
+import { Ad, AdDocument } from './schemas/ads.schema';
 
 @Injectable()
 export class AdsService {
@@ -20,15 +22,83 @@ export class AdsService {
         private adOptionsService: AdOptionsService
     ) {}
 
-    async getAllAd(): Promise<(AdBuy | AdRent)[]> {
-        return this.adModel
-            .find()
+    async getAllAd(getAllQueryDto: GetAllQueryDto): Promise<PaginateResult<AdRent | AdBuy>> {
+        const {
+            page,
+            limit,
+            search,
+            adType,
+            apartmentsType,
+            bedrooms,
+            priceMin,
+            priceMax,
+            priceRentMin,
+            priceRentMax,
+            depositMin,
+            depositMax,
+        } = getAllQueryDto;
+
+        const [adTypesIds, apartmentsTypeIds, bedroomsIds] = await Promise.all([
+            this.adOptionsService.getAllAdTypeByValue(adType, 'id'),
+            this.adOptionsService.getAllApartmentsByValue(apartmentsType, 'id'),
+            this.adOptionsService.getAllBedroomsByValue(bedrooms, 'id'),
+        ]);
+
+        const skip = (page - 1) * limit;
+
+        const filters: any = {
+            $or: [
+                { price: { $exists: true, $gte: priceMin, $lte: priceMax } },
+                { priceRent: { $exists: true, $gte: priceRentMin, $lte: priceRentMax } },
+                { deposit: { $exists: true, $gte: depositMin, $lte: depositMax } },
+            ],
+        };
+        let projection: any = {};
+        let sortOptions: any = { createdAt: -1 };
+
+        if (!!search.length) {
+            filters['$text'] = { $search: search, $caseSensitive: false };
+            projection = { ...projection, score: { $meta: 'textScore' } };
+            sortOptions = { ...sortOptions, score: { $meta: 'textScore' } };
+        }
+        if (!!adTypesIds.length) {
+            filters.adType = { $in: adTypesIds };
+        }
+        if (!!apartmentsTypeIds.length) {
+            filters.apartmentsType = { $in: apartmentsTypeIds };
+        }
+        if (!!bedroomsIds.length) {
+            filters.bedrooms = { $in: bedroomsIds };
+        }
+
+        const records: (AdRent | AdBuy)[] = await this.adModel
+            .find(filters, projection, { strictQuery: false })
+            .select('-score')
+            .sort(sortOptions)
+            .skip(skip)
+            .limit(limit)
             .populate({
                 path: 'elevator adType apartmentsType bedrooms bathrooms facilities',
                 select: 'label value',
             })
             .lean();
+
+        const totalRecords = await this.adModel
+            .find(filters, null, { strictQuery: false })
+            .countDocuments();
+        const totalPages = Math.ceil(totalRecords / limit);
+
+        return {
+            records,
+            meta: {
+                totalRecords,
+                limit,
+                totalPages,
+                page,
+            },
+        };
     }
+
     async getAdById(id: string): Promise<AdBuy | AdRent> {
         return this.adModel
             .findById(id)
@@ -38,19 +108,23 @@ export class AdsService {
             })
             .lean();
     }
+
     isCreateAdRent(ad: CreateAdRentDto | CreateAdBuyDto): ad is CreateAdRentDto {
         return (ad as CreateAdRentDto).priceRent !== undefined;
     }
+
     isCreateAdBuy(ad: CreateAdRentDto | CreateAdBuyDto): ad is CreateAdBuyDto {
         return (ad as CreateAdRentDto).price !== undefined;
     }
+
     async createAdRent(
         createAdRentDto: CreateAdRentDto,
         files: Express.Multer.File[]
     ): Promise<AdRent> {
-        const images = this.uploadImagesToCloudinary(files, 'ads');
+        const images = await this.uploadImagesToCloudinary(files, 'ads');
         return this.adRentModel.create({ ...createAdRentDto, images });
     }
+
     async createAdBuy(
         createAdBuyDto: CreateAdBuyDto,
         files: Express.Multer.File[]
@@ -58,6 +132,7 @@ export class AdsService {
         const images = await this.uploadImagesToCloudinary(files, 'ads');
         return this.adBuyModel.create({ ...createAdBuyDto, images });
     }
+
     async validateCreateAd(createAdDto: CreateAdDto) {
         const [elevator, adType, apartmentsType, bedrooms, bathrooms, facilities] =
             await Promise.all([
@@ -97,6 +172,7 @@ export class AdsService {
             facilities: facilities.map((item) => item._id.toString()),
         };
     }
+
     async createAd(
         createAdDto: CreateAdDto,
         files: Express.Multer.File[]

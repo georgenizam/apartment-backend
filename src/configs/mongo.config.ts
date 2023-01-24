@@ -18,6 +18,7 @@ const getMongoString = (configService: ConfigService) => {
         '/' +
         configService.get('DB_AUTH');
 
+    console.log('connectionString = ', connectionString);
     return connectionString;
 };
 

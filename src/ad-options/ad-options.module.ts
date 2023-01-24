@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
 import { AdOptionsController } from './ad-options.controller';
 import { AdOptionsService } from './ad-options.service';
-import { MongooseModule } from '@nestjs/mongoose';
 import { AdType, AdTypeSchema } from './schemas/ad-type.schema';
 import { ApartmentsType, ApartmentsTypeSchema } from './schemas/apartments-type.schema';
-import { Bedrooms, BedroomsSchema } from './schemas/bedrooms.schema';
 import { Bathrooms, BathroomsSchema } from './schemas/bathrooms.schema';
+import { Bedrooms, BedroomsSchema } from './schemas/bedrooms.schema';
 import { Elevator, ElevatorSchema } from './schemas/elevator.schema';
 import { Facilities, FacilitiesSchema } from './schemas/facilities.schema';
 

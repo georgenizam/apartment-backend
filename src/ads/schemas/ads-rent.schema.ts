@@ -1,5 +1,6 @@
-import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { Document } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { ApiProperty } from '@nestjs/swagger';
+import { Document } from 'mongoose';
 import { Ad } from './ads.schema';
 
 export type AdRentDocument = AdRent & Document & Ad;
@@ -9,9 +10,11 @@ export type AdRentDocument = AdRent & Document & Ad;
     timestamps: true,
 })
 export class AdRent extends Ad {
+    @ApiProperty({ example: '1000', description: 'Rent price', required: true })
     @Prop({ required: true })
     priceRent: number;
 
+    @ApiProperty({ example: '1000', description: 'deposit', required: true })
     @Prop({ required: true })
     deposit: number;
 }

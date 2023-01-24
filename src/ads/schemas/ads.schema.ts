@@ -1,10 +1,11 @@
-import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { ApiProperty } from '@nestjs/swagger';
 import mongoose, { Document } from 'mongoose';
-import { Elevator } from '../../ad-options/schemas/elevator.schema';
 import { AdType } from '../../ad-options/schemas/ad-type.schema';
 import { ApartmentsType } from '../../ad-options/schemas/apartments-type.schema';
-import { Bedrooms } from '../../ad-options/schemas/bedrooms.schema';
 import { Bathrooms } from '../../ad-options/schemas/bathrooms.schema';
+import { Bedrooms } from '../../ad-options/schemas/bedrooms.schema';
+import { Elevator } from '../../ad-options/schemas/elevator.schema';
 import { Facilities } from '../../ad-options/schemas/facilities.schema';
 
 export type AdDocument = Ad & Document;
@@ -30,6 +31,7 @@ export const ImagesSchema = SchemaFactory.createForClass(Images);
     discriminatorKey: '__t',
 })
 export class Ad {
+    @ApiProperty({ example: '63b729dbdd463eae53e3e133', description: 'Ad id', required: true })
     _id: mongoose.Types.ObjectId | string;
 
     @Prop({ required: true, type: mongoose.Schema.Types.ObjectId, ref: AdType.name })
@@ -88,3 +90,18 @@ export class Ad {
 }
 
 export const AdSchema = SchemaFactory.createForClass(Ad);
+
+AdSchema.index(
+    {
+        title: 'text',
+        desc: 'text',
+        country: 'text',
+        city: 'text',
+        street: 'text',
+        address: 'text',
+    },
+    {
+        name: 'search_text_index',
+        weights: { title: 1, desc: 1, country: 2, city: 3, street: 4, address: 5 },
+    }
+);
