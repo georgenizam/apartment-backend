@@ -1,5 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import * as bcrypt from 'bcryptjs';
 import { Model } from 'mongoose';
 import { Role } from '../auth/types/role.enum';
 import { AddRoleDto } from './dto/add-role.dto';
@@ -31,7 +32,7 @@ export class UsersService {
     }
 
     async createUser(userDto: CreateUserDto): Promise<User> {
-        const { email } = userDto;
+        const { email, password } = userDto;
         const candidate = await this.getUserByEmail(email);
 
         if (candidate) {
@@ -39,7 +40,8 @@ export class UsersService {
         }
 
         const roles = [Role.User];
-        const user = await this.userModel.create({ ...userDto, roles });
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = await this.userModel.create({ ...userDto, roles, password: hashedPassword });
 
         return user;
     }
@@ -47,8 +49,9 @@ export class UsersService {
     async addRole(addRoleDto: AddRoleDto): Promise<User> {
         const { value, userId } = addRoleDto;
         const user = await this.getUserById(userId);
+        const role = Object.values(Role).find((item) => item === value);
 
-        if (!(value in Role)) {
+        if (!role) {
             throw new NotFoundException('Role not found');
         }
 
@@ -56,7 +59,7 @@ export class UsersService {
             throw new NotFoundException('User not found');
         }
 
-        const roles = [Role[value]];
+        const roles = [role];
 
         const updatedUser = await this.userModel
             .findByIdAndUpdate(user._id, { $addToSet: { roles } }, { new: true })

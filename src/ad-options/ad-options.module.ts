@@ -8,10 +8,11 @@ import { Bathrooms, BathroomsSchema } from './schemas/bathrooms.schema';
 import { Bedrooms, BedroomsSchema } from './schemas/bedrooms.schema';
 import { Elevator, ElevatorSchema } from './schemas/elevator.schema';
 import { Facilities, FacilitiesSchema } from './schemas/facilities.schema';
+import { AdOptionsSeed } from './seed/ad-options.seed';
 
 @Module({
     controllers: [AdOptionsController],
-    providers: [AdOptionsService],
+    providers: [AdOptionsService, AdOptionsSeed],
     imports: [
         MongooseModule.forFeature([{ name: AdType.name, schema: AdTypeSchema }]),
         MongooseModule.forFeature([{ name: ApartmentsType.name, schema: ApartmentsTypeSchema }]),
@@ -20,6 +21,6 @@ import { Facilities, FacilitiesSchema } from './schemas/facilities.schema';
         MongooseModule.forFeature([{ name: Elevator.name, schema: ElevatorSchema }]),
         MongooseModule.forFeature([{ name: Facilities.name, schema: FacilitiesSchema }]),
     ],
-    exports: [AdOptionsService],
+    exports: [AdOptionsService, AdOptionsSeed],
 })
 export class AdOptionsModule {}

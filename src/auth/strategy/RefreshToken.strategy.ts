@@ -30,7 +30,8 @@ export class RefreshTokenStrategy extends PassportStrategy(Strategy, 'refresh-to
     }
 
     async validate(req: Request, payload: RefreshTokenPayload) {
-        const fingerprint = req?.fingerprint?.hash;
+        // const fingerprint = req?.fingerprint?.hash;
+        const fingerprint = 'fingerprint';
         const refreshToken = req?.cookies?.refreshToken;
         const ua = req.headers['user-agent'];
 

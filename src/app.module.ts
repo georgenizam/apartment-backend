@@ -7,8 +7,10 @@ import { AdsModule } from './ads/ads.module';
 import { AuthModule } from './auth/auth.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { getMongoConfig } from './configs/mongo.config';
-import { RefreshSessionsModule } from './refresh-sessions/refresh-sessions.module';
+import { SeedsModule } from './seeds/seeds.module';
+import { MediaModule } from './media/media.module';
 import { UsersModule } from './users/users.module';
+import { RefreshSessionsModule } from './refresh-sessions/refresh-sessions.module';
 
 @Module({
     imports: [
@@ -27,6 +29,8 @@ import { UsersModule } from './users/users.module';
         UsersModule,
         RefreshSessionsModule,
         CommandModule,
+        SeedsModule,
+        MediaModule,
     ],
 })
 export class AppModule {}

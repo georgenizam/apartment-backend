@@ -54,10 +54,10 @@ export class AuthService {
             throw new BadRequestException('User with this email already exists');
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        // const hashedPassword = await bcrypt.hash(password, 10);
         const user = await this.usersService.createUser({
             ...registerDto,
-            password: hashedPassword,
+            // password: hashedPassword,
         });
 
         const sid = uuidv4();

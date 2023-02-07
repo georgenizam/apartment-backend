@@ -86,7 +86,7 @@ export class AdOptionsService {
         return this.facilitiesModel.find().lean();
     }
     async getAllFacilitiesByValue(values: string[]): Promise<Facilities[]> {
-        return this.facilitiesModel.find().where('value').all(values).lean();
+        return this.facilitiesModel.find().where('value').in(values).lean();
     }
     async getFacilitiesByValue(value: string): Promise<Facilities> {
         return this.facilitiesModel.findOne({ value }).lean();

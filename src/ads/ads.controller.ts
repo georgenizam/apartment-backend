@@ -15,10 +15,12 @@ import {
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
+import { ValidateAdsDtoPipe } from '../pipes/validate-ads-dto.pipe';
 import { imageFileFilter } from '../utils/image-file-filter/imageFileFilter';
 import { AdsService } from './ads.service';
 import { FILES_MAX_COUNT, FILE_MAX_SIZE } from './constants/image-files.constants';
-import { CreateAdDto } from './dto/create-ad.dto';
+import { CreateAdBuyDto } from './dto/create-ad-buy.dto';
+import { CreateAdRentDto } from './dto/create-ad-rent.dto';
 import { GetAllQueryDto } from './dto/getall-query.dto';
 
 @ApiTags('Ads')
@@ -57,7 +59,7 @@ export class AdsController {
     )
     async createAd(
         @Req() req: Request,
-        @Body() createAdDto: CreateAdDto,
+        @Body(new ValidateAdsDtoPipe()) createAdDto: CreateAdRentDto | CreateAdBuyDto,
         @UploadedFiles() files: Express.Multer.File[]
     ) {
         return this.adsService.createAd(createAdDto, files);

@@ -13,17 +13,21 @@ export type AdDocument = Ad & Document;
 @Schema({
     versionKey: false,
     timestamps: false,
-    _id: false,
 })
-class Images {
-    @Prop({ required: true })
-    id: string;
+class Media {
+    _id: mongoose.Types.ObjectId | string;
 
     @Prop({ required: true })
-    image: string;
+    filename: string;
+
+    @Prop({ required: true })
+    path: string;
+
+    @Prop({ required: true })
+    mimetype: string;
 }
 
-export const ImagesSchema = SchemaFactory.createForClass(Images);
+export const MediaSchema = SchemaFactory.createForClass(Media);
 
 @Schema({
     versionKey: false,
@@ -46,8 +50,8 @@ export class Ad {
     @Prop({ required: true })
     desc: string;
 
-    @Prop({ type: [ImagesSchema], default: [] })
-    images: Images[];
+    @Prop({ type: [MediaSchema], default: [] })
+    media: Media[];
 
     @Prop({ required: true })
     floor: number;

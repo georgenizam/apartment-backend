@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AdOptionsService } from '../ad-options/ad-options.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { MediaService } from '../media/media.service';
 import { PaginateResult } from '../types/pagination.types';
 import { CreateAdBuyDto } from './dto/create-ad-buy.dto';
 import { CreateAdRentDto } from './dto/create-ad-rent.dto';
@@ -19,6 +20,7 @@ export class AdsService {
         @InjectModel(AdRent.name) private adRentModel: Model<AdRentDocument>,
         @InjectModel(AdBuy.name) private adBuyModel: Model<AdBuyDocument>,
         private cloudinary: CloudinaryService,
+        private mediaService: MediaService,
         private adOptionsService: AdOptionsService
     ) {}
 
@@ -114,23 +116,25 @@ export class AdsService {
     }
 
     isCreateAdBuy(ad: CreateAdRentDto | CreateAdBuyDto): ad is CreateAdBuyDto {
-        return (ad as CreateAdRentDto).price !== undefined;
+        return (ad as CreateAdBuyDto).price !== undefined;
     }
 
     async createAdRent(
         createAdRentDto: CreateAdRentDto,
-        files: Express.Multer.File[]
+        files: Express.Multer.File[] = []
     ): Promise<AdRent> {
-        const images = await this.uploadImagesToCloudinary(files, 'ads');
-        return this.adRentModel.create({ ...createAdRentDto, images });
+        // const images = await this.uploadImagesToCloudinary(files, 'ads');
+        const media = await this.mediaService.saveAdsMedia(files);
+        return this.adRentModel.create({ ...createAdRentDto, media });
     }
 
     async createAdBuy(
         createAdBuyDto: CreateAdBuyDto,
-        files: Express.Multer.File[]
+        files: Express.Multer.File[] = []
     ): Promise<AdBuy> {
-        const images = await this.uploadImagesToCloudinary(files, 'ads');
-        return this.adBuyModel.create({ ...createAdBuyDto, images });
+        // const images = await this.uploadImagesToCloudinary(files, 'ads');
+        const media = await this.mediaService.saveAdsMedia(files);
+        return this.adBuyModel.create({ ...createAdBuyDto, media });
     }
 
     async validateCreateAd(createAdDto: CreateAdDto) {
@@ -174,26 +178,19 @@ export class AdsService {
     }
 
     async createAd(
-        createAdDto: CreateAdDto,
-        files: Express.Multer.File[]
+        createAdDto: CreateAdRentDto | CreateAdBuyDto,
+        files: Express.Multer.File[] = []
     ): Promise<AdRent | AdBuy> {
-        const { elevator, adType, apartmentsType, bedrooms, bathrooms, facilities } =
-            await this.validateCreateAd(createAdDto);
+        const validatedParamsIds = await this.validateCreateAd(createAdDto);
 
-        const dto: CreateAdDto = {
+        const dto: CreateAdRentDto | CreateAdBuyDto = {
             ...createAdDto,
-            elevator,
-            adType,
-            apartmentsType,
-            bedrooms,
-            bathrooms,
-            facilities,
+            ...validatedParamsIds,
         };
 
         if (this.isCreateAdBuy(dto)) {
             return await this.createAdBuy(dto, files);
         }
-
         if (this.isCreateAdRent(dto)) {
             return await this.createAdRent(dto, files);
         }

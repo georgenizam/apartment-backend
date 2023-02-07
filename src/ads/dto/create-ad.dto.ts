@@ -1,5 +1,5 @@
 import { Transform, Type } from 'class-transformer';
-import { IsArray, IsDate, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsDate, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class CreateAdDto {
     @IsString()
@@ -70,20 +70,4 @@ export class CreateAdDto {
     @IsString()
     @IsNotEmpty()
     address: string;
-
-    @IsNumber()
-    @Type(() => Number)
-    @IsOptional()
-    price: number;
-
-    @IsNumber()
-    @Type(() => Number)
-    @IsOptional()
-    priceRent: number;
-    // rentPeriod: null;
-
-    @IsNumber()
-    @Type(() => Number)
-    @IsOptional()
-    deposit: number;
 }

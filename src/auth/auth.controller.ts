@@ -13,14 +13,12 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Request, Response } from 'express';
 import ms from 'ms';
 import { Cookies } from '../decorators/cookies.decorator';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RefreshTokenJwtAuthGuard } from './guard/RefreshToken.guard';
-import { RequestWithUserRT } from './types/request-with-user.type';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -32,13 +30,14 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     @Post('login')
     async login(
-        @Req() req: Request,
-        @Res({ passthrough: true }) res: Response,
+        @Req() req,
+        @Res({ passthrough: true }) res,
         @Ip() ip: string,
         @Headers('User-Agent') userAgent,
         @Body() loginDto: LoginDto
     ) {
         const fingerprint = req.fingerprint.hash ?? '';
+
         const { refreshToken, ...otherProps } = await this.authService.login(
             loginDto,
             fingerprint,
@@ -63,13 +62,14 @@ export class AuthController {
     @ApiResponse({ status: HttpStatus.CREATED, description: 'Success' })
     @Post('register')
     async register(
-        @Req() req: Request,
-        @Res({ passthrough: true }) res: Response,
+        @Req() req,
+        @Res({ passthrough: true }) res,
         @Ip() ip: string,
         @Headers('User-Agent') userAgent,
         @Body() registerDto: RegisterDto
     ) {
         const fingerprint = req.fingerprint.hash ?? '';
+
         const { refreshToken, ...otherProps } = await this.authService.register(
             registerDto,
             fingerprint,
@@ -95,13 +95,9 @@ export class AuthController {
     // @ApiCookieAuth()
     @UseGuards(RefreshTokenJwtAuthGuard)
     @Get('refresh')
-    async refresh(
-        @Req() req: RequestWithUserRT,
-        @Res() res: Response,
-        @Ip() ip,
-        @Headers('User-Agent') userAgent
-    ) {
+    async refresh(@Req() req, @Res() res, @Ip() ip, @Headers('User-Agent') userAgent) {
         const fingerprint = req.fingerprint.hash ?? '';
+
         const userId = req.user.userId;
         const { accessToken, refreshToken } = await this.authService.refresh(
             userId,
@@ -126,11 +122,7 @@ export class AuthController {
     @UseGuards(RefreshTokenJwtAuthGuard)
     @HttpCode(HttpStatus.NO_CONTENT)
     @Post('logout')
-    async logout(
-        @Req() req: Request,
-        @Res() res: Response,
-        @Cookies('refreshToken') refreshToken: string
-    ) {
+    async logout(@Req() req, @Res() res, @Cookies('refreshToken') refreshToken: string) {
         await this.authService.logout(refreshToken);
         res.clearCookie('refreshToken', {
             path: '/api/auth',
